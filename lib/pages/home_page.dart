@@ -1,3 +1,4 @@
+import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -29,33 +30,16 @@ class _HomePageState extends State<HomePage> {
         title: const Center(child: Text('Book List App')),
       ),
       body: Center(child: pages.elementAt(selectedIndex)),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: ConvexAppBar(
         backgroundColor: Colors.grey,
-        elevation: 2,
-        iconSize: 28,
-        //* selected item
-        selectedIconTheme: const IconThemeData(size: 40),
-        selectedItemColor: Colors.blueGrey,
-        selectedFontSize: 16,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        //* unselected item
-        unselectedIconTheme: const IconThemeData(color: Colors.white),
-        currentIndex: selectedIndex,
-        onTap: onItemTapped,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Listelerim',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
-            label: 'Kitaplar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profil',
-          ),
+        style: TabStyle.titled,
+        items: const <TabItem>[
+          TabItem(icon: Icons.list_alt, title: 'Listelerim'),
+          TabItem(icon: Icons.menu_book, title: 'Kitaplar'),
+          TabItem(icon: Icons.person, title: 'Profil'),
         ],
+        initialActiveIndex: selectedIndex, //optional, default as 0
+        onTap: onItemTapped,
       ),
     );
   }
