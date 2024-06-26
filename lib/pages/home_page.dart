@@ -1,6 +1,8 @@
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter/material.dart';
 
+import 'book_list_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -9,7 +11,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int selectedIndex = 0;
+  int selectedIndex = 1;
 
   void onItemTapped(int index) {
     setState(() {
@@ -19,7 +21,7 @@ class _HomePageState extends State<HomePage> {
 
   static const List<Widget> pages = <Widget>[
     Icon(Icons.list_alt, size: 150),
-    Icon(Icons.menu_book, size: 150),
+    BookListPage(),
     Icon(Icons.person, size: 150),
   ];
 
@@ -31,6 +33,7 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Center(child: pages.elementAt(selectedIndex)),
       bottomNavigationBar: ConvexAppBar(
+        height: 60,
         backgroundColor: Colors.grey,
         style: TabStyle.titled,
         items: const <TabItem>[
@@ -38,7 +41,7 @@ class _HomePageState extends State<HomePage> {
           TabItem(icon: Icons.menu_book, title: 'Kitaplar'),
           TabItem(icon: Icons.person, title: 'Profil'),
         ],
-        initialActiveIndex: selectedIndex, //optional, default as 0
+        initialActiveIndex: selectedIndex,
         onTap: onItemTapped,
       ),
     );
