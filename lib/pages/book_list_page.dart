@@ -1,4 +1,7 @@
+import 'package:book_list/constants/constants.dart';
 import 'package:flutter/material.dart';
+
+import '../widgets/booklist_card.dart';
 
 class BookListPage extends StatelessWidget {
   const BookListPage({super.key});
@@ -6,6 +9,10 @@ class BookListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Okuma Listesi"),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -15,29 +22,26 @@ class BookListPage extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                      elevation: 5,
-                      backgroundColor: Colors.orange[400],
-                      foregroundColor: Colors.grey[700]),
+                    elevation: 5,
+                    backgroundColor: MyColors.buttonColor,
+                    foregroundColor: Colors.grey[800],
+                  ),
                   child: const Icon(Icons.search),
-                ),
-                const Text(
-                  "Okuduğum Kitaplar",
-                  style: TextStyle(fontSize: 20),
                 ),
                 ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
                       elevation: 5,
-                      backgroundColor: Colors.orange[400],
-                      foregroundColor: Colors.grey[700]),
+                      backgroundColor: MyColors.buttonColor,
+                      foregroundColor: Colors.grey[900]),
                   child: const Text('Kitap Ekle'),
                 ),
               ],
             ),
-            const Divider()
+            const Divider(),
             //* KİTAP LİSTESİ
-
-          ],
+            const BookListCard(),
+          ], 
         ),
       ),
     );

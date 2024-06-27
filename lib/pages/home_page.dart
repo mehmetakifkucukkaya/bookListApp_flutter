@@ -1,6 +1,7 @@
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/constants.dart';
 import 'book_list_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -28,13 +29,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Center(child: Text('Book List App')),
-      ),
       body: Center(child: pages.elementAt(selectedIndex)),
       bottomNavigationBar: ConvexAppBar(
         height: 60,
-        backgroundColor: Colors.grey,
+        backgroundColor: MyColors.primaryColor,
         style: TabStyle.titled,
         items: const <TabItem>[
           TabItem(icon: Icons.list_alt, title: 'Listelerim'),
