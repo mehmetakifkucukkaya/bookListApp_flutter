@@ -12,26 +12,6 @@ class BookListPage extends StatefulWidget {
 }
 
 class _BookListPageState extends State<BookListPage> {
-  List<Map<String, dynamic>> books = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchBooks();
-  }
-
-  void fetchBooks() async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    CollectionReference booksRef = firestore.collection('books');
-
-    QuerySnapshot snapshot = await booksRef.get();
-    setState(() {
-      books = snapshot.docs
-          .map((doc) => doc.data() as Map<String, dynamic>)
-          .toList();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,20 +53,38 @@ class _BookListPageState extends State<BookListPage> {
           ),
           const Divider(),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: books.length,
-              itemBuilder: (context, index) {
-                final book = books[index];
-                return BookListCard(
-                  bookName: book['bookName'] ?? 'Unknown',
-                  genre: book['genre'] ?? 'Unknown',
-                  author: book['author'] ?? 'Unknown',
-                  pages: book['pages'] ?? 0,
-                  image: book['image'] ?? '',
-                  rate: book['rate'] ?? 4,
-                  readingYear: book['readingYear'] ?? 0,
-                  language: book['language'] ?? 'Unknown',
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('books')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("No books available"));
+                }
+
+                final books = snapshot.data!.docs
+                    .map((doc) => doc.data() as Map<String, dynamic>)
+                    .toList();
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: books.length,
+                  itemBuilder: (context, index) {
+                    final book = books[index];
+                    return BookListCard(
+                      bookName: book['bookName'] ?? 'Unknown',
+                      genre: book['genre'] ?? 'Unknown',
+                      author: book['author'] ?? 'Unknown',
+                      pages: book['pages'] ?? 0,
+                      image: book['image'] ?? '',
+                      rate: book['rate'] ?? 4,
+                      readingYear: book['readingYear'] ?? 0,
+                      language: book['language'] ?? 'Unknown',
+                    );
+                  },
                 );
               },
             ),
