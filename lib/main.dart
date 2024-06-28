@@ -2,6 +2,7 @@ import 'package:book_list/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import 'pages/add_book_page.dart';
 import 'pages/home_page.dart';
 
 Future<void> main() async {
@@ -21,6 +22,9 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(brightness: Brightness.dark),
         title: 'Book List App',
-        home: const HomePage());
+        routes: {
+          '/': (context) => const HomePage(),
+          'addBook': (context) => const AddBookPage(),
+        });
   }
 }

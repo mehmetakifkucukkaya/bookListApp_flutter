@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; // Correct import for Firebase Firestore
+import 'package:firebase_cloud_firestore/firebase_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/constants.dart';
@@ -8,7 +8,7 @@ class BookListPage extends StatefulWidget {
   const BookListPage({super.key});
 
   @override
-  _BookListPageState createState() => _BookListPageState();
+  State<BookListPage> createState() => _BookListPageState();
 }
 
 class _BookListPageState extends State<BookListPage> {
@@ -40,7 +40,9 @@ class _BookListPageState extends State<BookListPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, "addBook");
+                    },
                     style: ElevatedButton.styleFrom(
                         elevation: 5,
                         backgroundColor: MyColors.buttonColor,
