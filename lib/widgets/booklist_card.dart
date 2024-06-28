@@ -1,7 +1,26 @@
 import 'package:flutter/material.dart';
 
 class BookListCard extends StatelessWidget {
-  const BookListCard({super.key});
+  final String bookName;
+  final String genre;
+  final String author;
+  final int pages;
+  final int rate;
+  final int readingYear;
+  final String image;
+  final String language;
+
+  const BookListCard({
+    required this.bookName,
+    required this.genre,
+    required this.author,
+    required this.pages,
+    required this.image,
+    required this.rate,
+    required this.readingYear,
+    required this.language,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +29,7 @@ class BookListCard extends StatelessWidget {
       child: Row(
         children: [
           Image.network(
-            'https://www.iskultur.com.tr/webp/2019/08/serguzest-2.jpg',
+            '$image',
             width: 100,
             height: 100,
             fit: BoxFit.contain,
@@ -19,28 +38,37 @@ class BookListCard extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const Text(
-                  "Kitap İsmi",
-                  style: TextStyle( 
+                Text(
+                  bookName,
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
                       color: Colors.white),
                 ),
                 Text(
-                  "Yazar",
+                  author,
                   style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 17,
                       color: Colors.grey[600]),
                 ),
                 Text(
-                  "Tür",
+                  genre,
                   style: TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: 15,
                       color: Colors.grey[600]),
                 ),
-                Icon(Icons.star, color: Colors.yellow[700]),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    rate,
+                    (index) => Icon(
+                      Icons.star,
+                      color: Colors.yellow[700],
+                    ),
+                  ),
+                ),
               ],
             ),
           )
