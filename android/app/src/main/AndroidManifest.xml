@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+ <!-- Kamera izni ve donanım gereksinimi -->
+  <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" />
+
+    
     <application
         android:label="book_list"
         android:name="${applicationName}"

@@ -1,5 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:firebase_cloud_firestore/firebase_cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../constants/constants.dart';
 
@@ -19,6 +23,11 @@ class _AddBookPageState extends State<AddBookPage> {
       TextEditingController();
 
   String languageDropdownValue = 'Türkçe';
+
+  String isbn = '';
+  String bookTitle = '';
+  String bookAuthor = '';
+  int pageCount = 0;
 
   void addBook(String bookName, String author, String genre, int pages,
       String language, int readingYear) async {
@@ -53,6 +62,54 @@ class _AddBookPageState extends State<AddBookPage> {
         );
       }
     }
+  }
+
+  // ISBN ile Barkod Okuma
+  Future<void> scanBarcode() async {
+    try {
+      String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Geri Dön', true, ScanMode.BARCODE);
+      debugPrint(barcodeScanRes);
+      setState(() {
+        isbn = barcodeScanRes;
+      });
+
+      getBookDataWithISBN();
+    } on PlatformException catch (e) {
+      setState(() {
+        isbn = 'Barkod okuma işlemi başarısız oldu: $e';
+      });
+    }
+  }
+
+  void getBookDataWithISBN() async {
+    await dotenv.load(fileName: ".env");
+    var apiKey = dotenv.env['BOOKS_API_KEY'];
+    Dio dio = Dio();
+
+    Response response = await dio.get(
+        "https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn&printType=books&key=$apiKey");
+    var bookdata = response.data;
+
+    print(bookdata);
+
+    var book = bookdata['items'][0]['volumeInfo'];
+
+    setState(() {
+      bookTitle = book['title'];
+      bookAuthor = book['authors'][0];
+      pageCount = book['pageCount'];
+
+      //* Eğer ISBN ile kitap bilgileri alınmışsa, bu bilgileri textfieldara yazdırıyoruz
+
+      bookNameController.text = bookTitle;
+      authorController.text = bookAuthor;
+      pagesController.text = pageCount.toString();
+    });
+
+    print("Kitap Adı: $bookTitle");
+    print("Yazar: $bookAuthor");
+    print("Sayfa Sayısı: $pageCount");
   }
 
   @override
@@ -131,30 +188,47 @@ class _AddBookPageState extends State<AddBookPage> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 40),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    addBook(
-                      bookNameController.text,
-                      authorController.text,
-                      genreController.text,
-                      int.tryParse(pagesController.text) ?? 0,
-                      languageDropdownValue,
-                      int.tryParse(readingYearController.text) ?? 0,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    elevation: 5,
-                    backgroundColor: MyColors.buttonColor,
-                    foregroundColor: Colors.grey[900],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      addBook(
+                        bookNameController.text,
+                        authorController.text,
+                        genreController.text,
+                        int.tryParse(pagesController.text) ?? 0,
+                        languageDropdownValue,
+                        int.tryParse(readingYearController.text) ?? 0,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      elevation: 5,
+                      backgroundColor: MyColors.buttonColor,
+                      foregroundColor: Colors.grey[900],
+                    ),
+                    child: const Text(
+                      'Kaydet',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 16),
+                    ),
                   ),
-                  child: const Text(
-                    'Kaydet',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 18),
+                  ElevatedButton(
+                    onPressed: scanBarcode,
+                    style: ElevatedButton.styleFrom(
+                      elevation: 5,
+                      backgroundColor: MyColors.buttonColor,
+                      foregroundColor: Colors.grey[900],
+                    ),
+                    child: const Text(
+                      "ISBN Okut",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 16),
+                    ),
                   ),
-                ),
-              ),
+                  Text("Result: $isbn\n")
+                ],
+              )
             ],
           ),
         ),
