@@ -1,13 +1,20 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:firebase_cloud_firestore/firebase_cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart'
+    as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../constants/constants.dart';
 
+
+//TODO: Emulatörde çekien fotoğraf liste kısmında gözüküyor ancak gerçek cihazda gözükmüyor. "image" değeri boş olarak gidiyor
 class AddBookPage extends StatefulWidget {
   const AddBookPage({super.key});
 
@@ -28,11 +35,19 @@ class _AddBookPageState extends State<AddBookPage> {
   String isbn = '';
   String bookTitle = '';
   String bookAuthor = '';
+  String image = '';
   int pageCount = 0;
   int rate = 0;
 
-  void addBook(String bookName, String author, String genre, int pages,
-      String language, int readingYear, int rate) async {
+  Future<void> addBook(
+      String bookName,
+      String author,
+      String genre,
+      int pages,
+      String language,
+      int readingYear,
+      int rate,
+      String imageUrl) async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     CollectionReference booksRef = firestore.collection('books');
 
@@ -45,6 +60,7 @@ class _AddBookPageState extends State<AddBookPage> {
         'language': language,
         'readingYear': readingYear,
         "rate": rate,
+        "image": imageUrl,
       });
 
       if (mounted) {
@@ -67,7 +83,6 @@ class _AddBookPageState extends State<AddBookPage> {
     }
   }
 
-  // ISBN ile Barkod Okuma
   Future<void> scanBarcode() async {
     try {
       String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
@@ -94,8 +109,6 @@ class _AddBookPageState extends State<AddBookPage> {
         "https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn&printType=books&key=$apiKey");
     var bookdata = response.data;
 
-    print(bookdata);
-
     var book = bookdata['items'][0]['volumeInfo'];
 
     setState(() {
@@ -103,16 +116,46 @@ class _AddBookPageState extends State<AddBookPage> {
       bookAuthor = book['authors'][0];
       pageCount = book['pageCount'];
 
-      //* Eğer ISBN ile kitap bilgileri alınmışsa, bu bilgileri textfieldara yazdırıyoruz
-
       bookNameController.text = bookTitle;
       authorController.text = bookAuthor;
       pagesController.text = pageCount.toString();
     });
+  }
 
-    print("Kitap Adı: $bookTitle");
-    print("Yazar: $bookAuthor");
-    print("Sayfa Sayısı: $pageCount");
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image =
+        await picker.pickImage(source: ImageSource.camera);
+
+    if (image != null) {
+      await uploadImage(File(image.path));
+    }
+  }
+
+  Future<void> uploadImage(File file) async {
+    try {
+      firebase_storage.Reference ref = firebase_storage
+          .FirebaseStorage.instance
+          .ref()
+          .child('images')
+          .child('book_${DateTime.now().millisecondsSinceEpoch}.jpg');
+
+      await ref.putFile(file);
+
+      // Resim yüklendikten sonra URL'sini alıyoruz
+      String downloadUrl = await ref.getDownloadURL();
+
+      setState(() {
+        image = downloadUrl;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Resim yükleme hatası: $e'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   @override
@@ -210,7 +253,24 @@ class _AddBookPageState extends State<AddBookPage> {
                   },
                 ),
               ),
-              const SizedBox(height: 35),
+              const SizedBox(height: 15),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.image),
+                      iconSize: 30,
+                    ),
+                    const Text(
+                      "Kitap Kapak Resmi Ekle",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -224,7 +284,9 @@ class _AddBookPageState extends State<AddBookPage> {
                         languageDropdownValue,
                         int.tryParse(readingYearController.text) ?? 0,
                         rate.toInt(),
+                        image,
                       );
+                      print("Kaydedildi: $image ");
                     },
                     style: ElevatedButton.styleFrom(
                       elevation: 5,
