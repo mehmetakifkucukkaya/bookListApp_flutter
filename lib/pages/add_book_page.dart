@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 import '../constants/constants.dart';
 
@@ -28,9 +29,10 @@ class _AddBookPageState extends State<AddBookPage> {
   String bookTitle = '';
   String bookAuthor = '';
   int pageCount = 0;
+  int rate = 0;
 
   void addBook(String bookName, String author, String genre, int pages,
-      String language, int readingYear) async {
+      String language, int readingYear, int rate) async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     CollectionReference booksRef = firestore.collection('books');
 
@@ -42,6 +44,7 @@ class _AddBookPageState extends State<AddBookPage> {
         'pages': pages,
         'language': language,
         'readingYear': readingYear,
+        "rate": rate,
       });
 
       if (mounted) {
@@ -187,7 +190,27 @@ class _AddBookPageState extends State<AddBookPage> {
                 ),
                 keyboardType: TextInputType.number,
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 30),
+              Center(
+                child: RatingBar.builder(
+                  initialRating: 3,
+                  minRating: 0,
+                  direction: Axis.horizontal,
+                  itemCount: 5,
+                  itemSize: 30,
+                  itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  itemBuilder: (context, _) => const Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                  ),
+                  onRatingUpdate: (rating) {
+                    setState(() {
+                      rate = rating.toInt();
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 35),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -200,6 +223,7 @@ class _AddBookPageState extends State<AddBookPage> {
                         int.tryParse(pagesController.text) ?? 0,
                         languageDropdownValue,
                         int.tryParse(readingYearController.text) ?? 0,
+                        rate.toInt(),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -226,7 +250,6 @@ class _AddBookPageState extends State<AddBookPage> {
                           fontWeight: FontWeight.w700, fontSize: 16),
                     ),
                   ),
-                  Text("Result: $isbn\n")
                 ],
               )
             ],
