@@ -13,7 +13,6 @@ import 'package:image_picker/image_picker.dart';
 
 import '../constants/constants.dart';
 
-
 //TODO: Emulatörde çekien fotoğraf liste kısmında gözüküyor ancak gerçek cihazda gözükmüyor. "image" değeri boş olarak gidiyor
 class AddBookPage extends StatefulWidget {
   const AddBookPage({super.key});
@@ -40,27 +39,34 @@ class _AddBookPageState extends State<AddBookPage> {
   int rate = 0;
 
   Future<void> addBook(
-      String bookName,
-      String author,
-      String genre,
-      int pages,
-      String language,
-      int readingYear,
-      int rate,
-      String imageUrl) async {
+    String bookName,
+    String author,
+    String genre,
+    int pages,
+    String language,
+    int readingYear,
+    int rate,
+    String imageUrl,
+  ) async {
     FirebaseFirestore firestore = FirebaseFirestore.instance;
     CollectionReference booksRef = firestore.collection('books');
 
     try {
-      await booksRef.add({
+      // Kitabın adını (bookName) kullanarak bir ID oluşturabiliriz
+      String idFromTitle = bookName
+          .toLowerCase()
+          .replaceAll(' ', '_'); // Örnek bir ID oluşturma yöntemi
+
+      // Firestore'da belgeyi eklerken bu ID'yi belirtiyoruz
+      await booksRef.doc(idFromTitle).set({
         'bookName': bookName,
         'author': author,
         'genre': genre,
         'pages': pages,
         'language': language,
         'readingYear': readingYear,
-        "rate": rate,
-        "image": imageUrl,
+        'rate': rate,
+        'image': imageUrl,
       });
 
       if (mounted) {
@@ -286,7 +292,6 @@ class _AddBookPageState extends State<AddBookPage> {
                         rate.toInt(),
                         image,
                       );
-                      print("Kaydedildi: $image ");
                     },
                     style: ElevatedButton.styleFrom(
                       elevation: 5,
