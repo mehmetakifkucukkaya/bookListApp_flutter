@@ -14,6 +14,8 @@ class BookListPage extends StatefulWidget {
 
 class _BookListPageState extends State<BookListPage> {
   List<DocumentSnapshot> books = [];
+  TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
 
   void _deleteBook(String bookId, String bookName, int index) {
     setState(() {
@@ -175,17 +177,20 @@ class _BookListPageState extends State<BookListPage> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      elevation: 5,
-                      backgroundColor: MyColors.buttonColor,
-                      foregroundColor: Colors.grey[800],
+                  child: TextField(
+                    controller: searchController,
+                    decoration: const InputDecoration(
+                      labelText: 'Kitap Ara',
+                      prefixIconColor: MyColors.buttonColor,
+                      prefixIcon: Icon(Icons.search),
                     ),
-                    child: const Icon(Icons.search),
+                    onChanged: (value) {
+                      setState(() {
+                        searchQuery = value.toLowerCase();
+                      });
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -216,16 +221,27 @@ class _BookListPageState extends State<BookListPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("No books available"));
+                  return const Center(child: Text("Kitap yok"));
                 }
 
                 books = snapshot.data!.docs;
 
+                // Filtreleme işlemi
+                List<DocumentSnapshot> filteredBooks =
+                    books.where((bookDoc) {
+                  Map<String, dynamic> book =
+                      bookDoc.data() as Map<String, dynamic>;
+                  String bookName = book['bookName'].toLowerCase();
+                  String author = book['author'].toLowerCase();
+                  return bookName.contains(searchQuery) ||
+                      author.contains(searchQuery);
+                }).toList();
+
                 return ListView.builder(
                   padding: const EdgeInsets.all(8),
-                  itemCount: books.length,
+                  itemCount: filteredBooks.length,
                   itemBuilder: (context, index) {
-                    final bookDoc = books[index];
+                    final bookDoc = filteredBooks[index];
                     final book = bookDoc.data() as Map<String, dynamic>;
 
                     return Dismissible(
