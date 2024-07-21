@@ -13,7 +13,6 @@ import 'package:image_picker/image_picker.dart';
 
 import '../constants/constants.dart';
 
-//TODO: Emulatörde çekien fotoğraf liste kısmında gözüküyor ancak gerçek cihazda gözükmüyor. "image" değeri boş olarak gidiyor
 class AddBookPage extends StatefulWidget {
   const AddBookPage({super.key});
 
@@ -30,62 +29,40 @@ class _AddBookPageState extends State<AddBookPage> {
       TextEditingController();
 
   String languageDropdownValue = 'Türkçe';
-
   String isbn = '';
-  String bookTitle = '';
-  String bookAuthor = '';
-  String image = '';
-  int pageCount = 0;
+  String imageUrl = '';
   int rate = 0;
 
-  Future<void> addBook(
-    String bookName,
-    String author,
-    String genre,
-    int pages,
-    String language,
-    int readingYear,
-    int rate,
-    String imageUrl,
-  ) async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    CollectionReference booksRef = firestore.collection('books');
-
+  Future<void> addBook() async {
     try {
-      // Kitabın adını (bookName) kullanarak bir ID oluşturabiliriz
-      String idFromTitle = bookName
-          .toLowerCase()
-          .replaceAll(' ', '_'); // Örnek bir ID oluşturma yöntemi
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+      String idFromTitle =
+          bookNameController.text.toLowerCase().replaceAll(' ', '_');
 
-      // Firestore'da belgeyi eklerken bu ID'yi belirtiyoruz
-      await booksRef.doc(idFromTitle).set({
-        'bookName': bookName,
-        'author': author,
-        'genre': genre,
-        'pages': pages,
-        'language': language,
-        'readingYear': readingYear,
+      await firestore.collection('books').doc(idFromTitle).set({
+        'bookName': bookNameController.text,
+        'author': authorController.text,
+        'genre': genreController.text,
+        'pages': int.tryParse(pagesController.text) ?? 0,
+        'language': languageDropdownValue,
+        'readingYear': int.tryParse(readingYearController.text) ?? 0,
         'rate': rate,
         'image': imageUrl,
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
             content: Text('Kitap başarıyla eklendi.'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+            duration: Duration(seconds: 2)),
+      );
+
+      Navigator.pushNamed(context, '/bookListPage');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
             content: Text('Kitap eklenirken hata oluştu: $e'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+            duration: const Duration(seconds: 2)),
+      );
     }
   }
 
@@ -93,7 +70,6 @@ class _AddBookPageState extends State<AddBookPage> {
     try {
       String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Geri Dön', true, ScanMode.BARCODE);
-      debugPrint(barcodeScanRes);
       setState(() {
         isbn = barcodeScanRes;
       });
@@ -106,25 +82,19 @@ class _AddBookPageState extends State<AddBookPage> {
     }
   }
 
-  void getBookDataWithISBN() async {
+  Future<void> getBookDataWithISBN() async {
     await dotenv.load(fileName: ".env");
     var apiKey = dotenv.env['BOOKS_API_KEY'];
     Dio dio = Dio();
 
     Response response = await dio.get(
         "https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn&printType=books&key=$apiKey");
-    var bookdata = response.data;
-
-    var book = bookdata['items'][0]['volumeInfo'];
+    var book = response.data['items'][0]['volumeInfo'];
 
     setState(() {
-      bookTitle = book['title'];
-      bookAuthor = book['authors'][0];
-      pageCount = book['pageCount'];
-
-      bookNameController.text = bookTitle;
-      authorController.text = bookAuthor;
-      pagesController.text = pageCount.toString();
+      bookNameController.text = book['title'];
+      authorController.text = book['authors'][0];
+      pagesController.text = book['pageCount'].toString();
     });
   }
 
@@ -147,19 +117,16 @@ class _AddBookPageState extends State<AddBookPage> {
           .child('book_${DateTime.now().millisecondsSinceEpoch}.jpg');
 
       await ref.putFile(file);
-
-      // Resim yüklendikten sonra URL'sini alıyoruz
       String downloadUrl = await ref.getDownloadURL();
 
       setState(() {
-        image = downloadUrl;
+        imageUrl = downloadUrl;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Resim yükleme hatası: $e'),
-          duration: const Duration(seconds: 1),
-        ),
+            content: Text('Resim yükleme hatası: $e'),
+            duration: const Duration(seconds: 1)),
       );
     }
   }
@@ -172,157 +139,133 @@ class _AddBookPageState extends State<AddBookPage> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: bookNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Kitap Adı',
-                  hintText: 'Kitabın adını girin',
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: authorController,
-                decoration: const InputDecoration(
-                  labelText: 'Yazar',
-                  hintText: 'Kitabın yazarını girin',
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: genreController,
-                decoration: const InputDecoration(
-                  labelText: 'Tür',
-                  hintText: 'Kitabın türünü girin',
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: pagesController,
-                decoration: const InputDecoration(
-                  labelText: 'Sayfa Sayısı',
-                  hintText: 'Kitabın sayfa sayısını girin',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                value: languageDropdownValue,
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      languageDropdownValue = newValue;
-                    });
-                  }
-                },
-                items: <String>['Türkçe', 'İngilizce']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                decoration: const InputDecoration(
-                  labelText: 'Dil',
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: readingYearController,
-                decoration: const InputDecoration(
-                  labelText: 'Okuduğum Yıl',
-                  hintText: 'Kitabı okuduğunuz yılı girin',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 30),
-              Center(
-                child: RatingBar.builder(
-                  initialRating: 3,
-                  minRating: 0,
-                  direction: Axis.horizontal,
-                  itemCount: 5,
-                  itemSize: 30,
-                  itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  itemBuilder: (context, _) => const Icon(
-                    Icons.star,
-                    color: Colors.amber,
-                  ),
-                  onRatingUpdate: (rating) {
-                    setState(() {
-                      rate = rating.toInt();
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 15),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: _pickImage,
-                      icon: const Icon(Icons.image),
-                      iconSize: 30,
-                    ),
-                    const Text(
-                      "Kitap Kapak Resmi Ekle",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      addBook(
-                        bookNameController.text,
-                        authorController.text,
-                        genreController.text,
-                        int.tryParse(pagesController.text) ?? 0,
-                        languageDropdownValue,
-                        int.tryParse(readingYearController.text) ?? 0,
-                        rate.toInt(),
-                        image,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      elevation: 5,
-                      backgroundColor: MyColors.buttonColor,
-                      foregroundColor: Colors.grey[900],
-                    ),
-                    child: const Text(
-                      'Kaydet',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 16),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: scanBarcode,
-                    style: ElevatedButton.styleFrom(
-                      elevation: 5,
-                      backgroundColor: MyColors.buttonColor,
-                      foregroundColor: Colors.grey[900],
-                    ),
-                    child: const Text(
-                      "ISBN Okut",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 16),
-                    ),
-                  ),
-                ],
-              )
-            ],
-          ),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTextField(
+                bookNameController, 'Kitap Adı', 'Kitabın adını girin'),
+            const SizedBox(height: 20),
+            _buildTextField(
+                authorController, 'Yazar', 'Kitabın yazarını girin'),
+            const SizedBox(height: 20),
+            _buildTextField(
+                genreController, 'Tür', 'Kitabın türünü girin'),
+            const SizedBox(height: 20),
+            _buildTextField(pagesController, 'Sayfa Sayısı',
+                'Kitabın sayfa sayısını girin',
+                isNumber: true),
+            const SizedBox(height: 20),
+            _buildDropdown(),
+            const SizedBox(height: 20),
+            _buildTextField(readingYearController, 'Okuduğum Yıl',
+                'Kitabı okuduğunuz yılı girin',
+                isNumber: true),
+            const SizedBox(height: 30),
+            _buildRatingBar(),
+            const SizedBox(height: 15),
+            _buildImagePicker(),
+            const SizedBox(height: 20),
+            _buildActionButtons(),
+          ],
         ),
       ),
+    );
+  }
+
+  TextFormField _buildTextField(
+      TextEditingController controller, String label, String hint,
+      {bool isNumber = false}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label, hintText: hint),
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+    );
+  }
+
+  DropdownButtonFormField<String> _buildDropdown() {
+    return DropdownButtonFormField<String>(
+      value: languageDropdownValue,
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            languageDropdownValue = newValue;
+          });
+        }
+      },
+      items: <String>['Türkçe', 'İngilizce']
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      decoration: const InputDecoration(labelText: 'Dil'),
+    );
+  }
+
+  Center _buildRatingBar() {
+    return Center(
+      child: RatingBar.builder(
+        initialRating: 3,
+        minRating: 0,
+        direction: Axis.horizontal,
+        itemCount: 5,
+        itemSize: 30,
+        itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+        itemBuilder: (context, _) =>
+            const Icon(Icons.star, color: Colors.amber),
+        onRatingUpdate: (rating) {
+          setState(() {
+            rate = rating.toInt();
+          });
+        },
+      ),
+    );
+  }
+
+  GestureDetector _buildImagePicker() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: _pickImage,
+            icon: const Icon(Icons.image),
+            iconSize: 30,
+          ),
+          const Text("Kitap Kapak Resmi Ekle",
+              style: TextStyle(fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Row _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        ElevatedButton(
+          onPressed: addBook,
+          style: ElevatedButton.styleFrom(
+            elevation: 5,
+            backgroundColor: MyColors.buttonColor,
+            foregroundColor: Colors.grey[900],
+          ),
+          child: const Text('Kaydet',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        ),
+        ElevatedButton(
+          onPressed: scanBarcode,
+          style: ElevatedButton.styleFrom(
+            elevation: 5,
+            backgroundColor: MyColors.buttonColor,
+            foregroundColor: Colors.grey[900],
+          ),
+          child: const Text("ISBN Okut",
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        ),
+      ],
     );
   }
 }

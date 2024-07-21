@@ -1,4 +1,5 @@
 import 'package:book_list/firebase_options.dart';
+import 'package:book_list/pages/book_list_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => const HomePage(),
           'addBook': (context) => const AddBookPage(),
+          '/bookListPage': (context) => const BookListPage(),
         });
   }
 }

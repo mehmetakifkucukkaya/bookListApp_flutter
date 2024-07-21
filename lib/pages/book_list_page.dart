@@ -29,6 +29,10 @@ class _BookListPageState extends State<BookListPage> {
     );
   }
 
+  void _updateBook(String bookId, Map<String, dynamic> book, int index) {
+    _showUpdateDialog(bookId, book, index);
+  }
+
   void _showUpdateDialog(
       String bookId, Map<String, dynamic> book, int index) {
     final formKey = GlobalKey<FormState>();
@@ -44,8 +48,7 @@ class _BookListPageState extends State<BookListPage> {
         TextEditingController(text: book['readingYear'].toString());
     final TextEditingController languageController =
         TextEditingController(text: book['language']);
-    double rate =
-        book['rate']?.toDouble() ?? 0; // Rating için bir değişken
+    double rate = book['rate']?.toDouble() ?? 0;
 
     showDialog(
       context: context,
@@ -58,98 +61,17 @@ class _BookListPageState extends State<BookListPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextFormField(
-                    controller: bookNameController,
-                    decoration:
-                        const InputDecoration(labelText: 'Kitap Adı'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Lütfen kitap adını girin';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: genreController,
-                    decoration: const InputDecoration(labelText: 'Tür'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Lütfen türü girin';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: authorController,
-                    decoration: const InputDecoration(labelText: 'Yazar'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Lütfen yazarı girin';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: pagesController,
-                    decoration:
-                        const InputDecoration(labelText: 'Sayfa Sayısı'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Lütfen sayfa sayısını girin';
-                      }
-                      if (int.tryParse(value) == null) {
-                        return 'Lütfen geçerli bir sayı girin';
-                      }
-                      return null;
-                    },
-                  ),
-                  // RatingBar ekleniyor
-                  Center(
-                    child: RatingBar.builder(
-                      initialRating: rate,
-                      minRating: 0,
-                      direction: Axis.horizontal,
-                      itemCount: 5,
-                      itemSize: 30,
-                      itemPadding:
-                          const EdgeInsets.symmetric(horizontal: 4.0),
-                      itemBuilder: (context, _) => const Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                      ),
-                      onRatingUpdate: (newRate) {
-                        setState(() {
-                          rate = newRate;
-                        });
-                      },
-                    ),
-                  ),
-                  TextFormField(
-                    controller: readingYearController,
-                    decoration:
-                        const InputDecoration(labelText: 'Okuma Yılı'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Lütfen okuma yılını girin';
-                      }
-                      if (int.tryParse(value) == null) {
-                        return 'Lütfen geçerli bir yıl girin';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: languageController,
-                    decoration: const InputDecoration(labelText: 'Dil'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Lütfen dili girin';
-                      }
-                      return null;
-                    },
-                  ),
+                  _buildTextField(bookNameController, 'Kitap Adı'),
+                  _buildTextField(genreController, 'Tür'),
+                  _buildTextField(authorController, 'Yazar'),
+                  _buildNumberField(pagesController, 'Sayfa Sayısı'),
+                  _buildRatingBar(rate, (newRate) {
+                    setState(() {
+                      rate = newRate;
+                    });
+                  }),
+                  _buildNumberField(readingYearController, 'Okuma Yılı'),
+                  _buildTextField(languageController, 'Dil'),
                 ],
               ),
             ),
@@ -172,7 +94,7 @@ class _BookListPageState extends State<BookListPage> {
                     'genre': genreController.text,
                     'author': authorController.text,
                     'pages': int.parse(pagesController.text),
-                    'rate': rate.toInt(), // Güncellenmiş rate kullanılıyor
+                    'rate': rate.toInt(),
                     'readingYear': int.parse(readingYearController.text),
                     'language': languageController.text,
                   }).then((_) {
@@ -191,8 +113,54 @@ class _BookListPageState extends State<BookListPage> {
     );
   }
 
-  void _updateBook(String bookId, Map<String, dynamic> book, int index) {
-    _showUpdateDialog(bookId, book, index);
+  TextFormField _buildTextField(
+      TextEditingController controller, String labelText) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: labelText),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Lütfen $labelText girin';
+        }
+        return null;
+      },
+    );
+  }
+
+  TextFormField _buildNumberField(
+      TextEditingController controller, String labelText) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: labelText),
+      keyboardType: TextInputType.number,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Lütfen $labelText girin';
+        }
+        if (int.tryParse(value) == null) {
+          return 'Lütfen geçerli bir sayı girin';
+        }
+        return null;
+      },
+    );
+  }
+
+  Center _buildRatingBar(double rate, Function(double) onRatingUpdate) {
+    return Center(
+      child: RatingBar.builder(
+        initialRating: rate,
+        minRating: 0,
+        direction: Axis.horizontal,
+        itemCount: 5,
+        itemSize: 30,
+        itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+        itemBuilder: (context, _) => const Icon(
+          Icons.star,
+          color: Colors.amber,
+        ),
+        onRatingUpdate: onRatingUpdate,
+      ),
+    );
   }
 
   @override
@@ -227,9 +195,10 @@ class _BookListPageState extends State<BookListPage> {
                       Navigator.pushNamed(context, "addBook");
                     },
                     style: ElevatedButton.styleFrom(
-                        elevation: 5,
-                        backgroundColor: MyColors.buttonColor,
-                        foregroundColor: Colors.grey[900]),
+                      elevation: 5,
+                      backgroundColor: MyColors.buttonColor,
+                      foregroundColor: Colors.grey[900],
+                    ),
                     child: const Text('Kitap Ekle'),
                   ),
                 ),
@@ -237,9 +206,6 @@ class _BookListPageState extends State<BookListPage> {
             ),
           ),
           const Divider(),
-
-          //*  KİTAP LİSTESİ
-
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -263,7 +229,7 @@ class _BookListPageState extends State<BookListPage> {
                     final book = bookDoc.data() as Map<String, dynamic>;
 
                     return Dismissible(
-                      key: Key(bookDoc.id),
+                      key: UniqueKey(),
                       direction: DismissDirection.horizontal,
                       onDismissed: (direction) {
                         if (direction == DismissDirection.endToStart) {
