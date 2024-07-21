@@ -10,7 +10,7 @@
 
     
     <application
-        android:label="book_list"
+        android:label="BookList"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
