@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_cloud_firestore/firebase_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 import '../constants/constants.dart';
 import '../widgets/booklist_card.dart';
-import 'book_detail_page.dart'; // Kitap Detay Sayfasını içeri aktarıyoruz
+import 'book_detail_page.dart';
 
 class BookListPage extends StatefulWidget {
   const BookListPage({super.key});
@@ -252,7 +252,8 @@ class _BookListPageState extends State<BookListPage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => BookDetailPage(
-                              book: book,
+                              books: filteredBooks,
+                              initialIndex: index,
                             ),
                           ),
                         );
