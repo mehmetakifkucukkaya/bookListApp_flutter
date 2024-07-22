@@ -4,6 +4,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 import '../constants/constants.dart';
 import '../widgets/booklist_card.dart';
+import 'book_detail_page.dart'; // Kitap Detay Sayfasını içeri aktarıyoruz
 
 class BookListPage extends StatefulWidget {
   const BookListPage({super.key});
@@ -181,6 +182,7 @@ class _BookListPageState extends State<BookListPage> {
                 Expanded(
                   child: TextField(
                     controller: searchController,
+                    autofocus: false,
                     decoration: const InputDecoration(
                       labelText: 'Kitap Ara',
                       prefixIconColor: MyColors.buttonColor,
@@ -244,41 +246,55 @@ class _BookListPageState extends State<BookListPage> {
                     final bookDoc = filteredBooks[index];
                     final book = bookDoc.data() as Map<String, dynamic>;
 
-                    return Dismissible(
-                      key: UniqueKey(),
-                      direction: DismissDirection.horizontal,
-                      onDismissed: (direction) {
-                        if (direction == DismissDirection.endToStart) {
-                          _deleteBook(bookDoc.id, book['bookName'], index);
-                        } else if (direction ==
-                            DismissDirection.startToEnd) {
-                          _updateBook(bookDoc.id, book, index);
-                        }
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BookDetailPage(
+                              book: book,
+                            ),
+                          ),
+                        );
                       },
-                      background: Container(
-                        color: Colors.green,
-                        alignment: Alignment.centerLeft,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Icon(Icons.edit, color: Colors.white),
-                      ),
-                      secondaryBackground: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 20),
-                        child:
-                            const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      child: BookListCard(
-                        bookName: book['bookName'] ?? 'Unknown',
-                        genre: book['genre'] ?? 'Unknown',
-                        author: book['author'] ?? 'Unknown',
-                        pages: book['pages'] ?? 0,
-                        image: book['image'] ?? '',
-                        rate: book['rate'] ?? 4,
-                        readingYear: book['readingYear'] ?? 0,
-                        language: book['language'] ?? 'Unknown',
+                      child: Dismissible(
+                        key: UniqueKey(),
+                        direction: DismissDirection.horizontal,
+                        onDismissed: (direction) {
+                          if (direction == DismissDirection.endToStart) {
+                            _deleteBook(
+                                bookDoc.id, book['bookName'], index);
+                          } else if (direction ==
+                              DismissDirection.startToEnd) {
+                            _updateBook(bookDoc.id, book, index);
+                          }
+                        },
+                        background: Container(
+                          color: Colors.green,
+                          alignment: Alignment.centerLeft,
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
+                          child:
+                              const Icon(Icons.edit, color: Colors.white),
+                        ),
+                        secondaryBackground: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete,
+                              color: Colors.white),
+                        ),
+                        child: BookListCard(
+                          bookName: book['bookName'] ?? 'Unknown',
+                          genre: book['genre'] ?? 'Unknown',
+                          author: book['author'] ?? 'Unknown',
+                          pages: book['pages'] ?? 0,
+                          image: book['image'] ?? '',
+                          rate: book['rate'] ?? 4,
+                          readingYear: book['readingYear'] ?? 0,
+                          language: book['language'] ?? 'Unknown',
+                        ),
                       ),
                     );
                   },
