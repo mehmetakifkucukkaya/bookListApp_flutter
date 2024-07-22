@@ -51,6 +51,8 @@ class _BookListPageState extends State<BookListPage> {
         TextEditingController(text: book['readingYear'].toString());
     final TextEditingController languageController =
         TextEditingController(text: book['language']);
+    final TextEditingController summaryController =
+        TextEditingController(text: book['summary'] ?? '');
     double rate = book['rate']?.toDouble() ?? 0;
 
     showDialog(
@@ -75,6 +77,7 @@ class _BookListPageState extends State<BookListPage> {
                   }),
                   _buildNumberField(readingYearController, 'Okuma Yılı'),
                   _buildTextField(languageController, 'Dil'),
+                  _buildTextField(summaryController, 'Özet'),
                 ],
               ),
             ),
@@ -100,6 +103,7 @@ class _BookListPageState extends State<BookListPage> {
                     'rate': rate.toInt(),
                     'readingYear': int.parse(readingYearController.text),
                     'language': languageController.text,
+                    'summary': summaryController.text,
                   }).then((_) {
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(

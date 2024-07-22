@@ -25,6 +25,7 @@ class _AddBookPageState extends State<AddBookPage> {
   final TextEditingController authorController = TextEditingController();
   final TextEditingController genreController = TextEditingController();
   final TextEditingController pagesController = TextEditingController();
+  final TextEditingController summaryController = TextEditingController();
   final TextEditingController readingYearController =
       TextEditingController();
 
@@ -48,6 +49,7 @@ class _AddBookPageState extends State<AddBookPage> {
         'readingYear': int.tryParse(readingYearController.text) ?? 0,
         'rate': rate,
         'image': imageUrl,
+        'summary': summaryController.text, // Yeni
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -161,6 +163,9 @@ class _AddBookPageState extends State<AddBookPage> {
             _buildTextField(readingYearController, 'Okuduğum Yıl',
                 'Kitabı okuduğunuz yılı girin',
                 isNumber: true),
+            const SizedBox(height: 20),
+            _buildTextField(
+                summaryController, 'Özet', 'Kitap özetini girin'), // Yeni
             const SizedBox(height: 30),
             _buildRatingBar(),
             const SizedBox(height: 15),
