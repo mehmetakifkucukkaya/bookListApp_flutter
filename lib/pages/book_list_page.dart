@@ -1,4 +1,4 @@
-import 'package:firebase_cloud_firestore/firebase_cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
@@ -19,17 +19,23 @@ class _BookListPageState extends State<BookListPage> {
   String searchQuery = '';
 
   void _deleteBook(String bookId, String bookName, int index) {
-    setState(() {
-      books.removeAt(index);
+    FirebaseFirestore.instance
+        .collection('books')
+        .doc(bookId)
+        .delete()
+        .then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$bookName silindi'),
+        ),
+      );
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Silme işlemi sırasında bir hata oluştu: $error'),
+        ),
+      );
     });
-
-    FirebaseFirestore.instance.collection('books').doc(bookId).delete();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$bookName silindi'),
-      ),
-    );
   }
 
   void _updateBook(String bookId, Map<String, dynamic> book, int index) {
@@ -265,14 +271,42 @@ class _BookListPageState extends State<BookListPage> {
                       child: Dismissible(
                         key: UniqueKey(),
                         direction: DismissDirection.horizontal,
-                        onDismissed: (direction) {
+                        confirmDismiss: (direction) async {
                           if (direction == DismissDirection.endToStart) {
-                            _deleteBook(
-                                bookDoc.id, book['bookName'], index);
+                            return await showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("Kitabı Sil"),
+                                  content: Text(
+                                      "${book['bookName']} kitabını silmek istediğinize emin misiniz?"),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: const Text("İptal"),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(
+                                            false); // Silmeyi iptal et
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: const Text("Sil"),
+                                      onPressed: () {
+                                        _deleteBook(bookDoc.id,
+                                            book['bookName'], index);
+                                        Navigator.of(context)
+                                            .pop(true); // Silmeyi onayla
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
                           } else if (direction ==
                               DismissDirection.startToEnd) {
                             _updateBook(bookDoc.id, book, index);
+                            return false; // Silme işlemi yapılmasın
                           }
+                          return false; // Herhangi başka bir durumda silme işlemi yapılmasın
                         },
                         background: Container(
                           color: Colors.green,
