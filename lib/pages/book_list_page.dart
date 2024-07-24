@@ -179,169 +179,166 @@ class _BookListPageState extends State<BookListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Okuma Listesi"),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: searchController,
-                    autofocus: false,
-                    decoration: const InputDecoration(
-                      labelText: 'Kitap Ara',
-                      prefixIconColor: MyColors.buttonColor,
-                      prefixIcon: Icon(Icons.search),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        searchQuery = value.toLowerCase();
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, "addBook");
-                    },
-                    style: ElevatedButton.styleFrom(
-                      elevation: 5,
-                      backgroundColor: MyColors.buttonColor,
-                      foregroundColor: Colors.grey[900],
-                    ),
-                    child: const Text('Kitap Ekle'),
-                  ),
-                ),
-              ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: SearchBar(
+                elevation: const WidgetStatePropertyAll(5),
+                hintText: "Kitap ara",
+                leading: const Icon(Icons.search),
+                controller: searchController,
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value.toLowerCase();
+                  });
+                },
+              ),
             ),
-          ),
-          const Divider(),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('books')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("Kitap yok"));
-                }
-
-                books = snapshot.data!.docs;
-
-                // Filtreleme işlemi
-                List<DocumentSnapshot> filteredBooks =
-                    books.where((bookDoc) {
-                  Map<String, dynamic> book =
-                      bookDoc.data() as Map<String, dynamic>;
-                  String bookName = book['bookName'].toLowerCase();
-                  String author = book['author'].toLowerCase();
-                  return bookName.contains(searchQuery) ||
-                      author.contains(searchQuery);
-                }).toList();
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: filteredBooks.length,
-                  itemBuilder: (context, index) {
-                    final bookDoc = filteredBooks[index];
-                    final book = bookDoc.data() as Map<String, dynamic>;
-
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookDetailPage(
-                              books: filteredBooks,
-                              initialIndex: index,
-                            ),
-                          ),
-                        );
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, "addBook");
                       },
-                      child: Dismissible(
-                        key: UniqueKey(),
-                        direction: DismissDirection.horizontal,
-                        confirmDismiss: (direction) async {
-                          if (direction == DismissDirection.endToStart) {
-                            return await showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text("Kitabı Sil"),
-                                  content: Text(
-                                      "${book['bookName']} kitabını silmek istediğinize emin misiniz?"),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: const Text("İptal"),
-                                      onPressed: () {
-                                        Navigator.of(context).pop(
-                                            false); // Silmeyi iptal et
-                                      },
-                                    ),
-                                    TextButton(
-                                      child: const Text("Sil"),
-                                      onPressed: () {
-                                        _deleteBook(bookDoc.id,
-                                            book['bookName'], index);
-                                        Navigator.of(context)
-                                            .pop(true); // Silmeyi onayla
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          } else if (direction ==
-                              DismissDirection.startToEnd) {
-                            _updateBook(bookDoc.id, book, index);
-                            return false; // Silme işlemi yapılmasın
-                          }
-                          return false; // Herhangi başka bir durumda silme işlemi yapılmasın
-                        },
-                        background: Container(
-                          color: Colors.green,
-                          alignment: Alignment.centerLeft,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 20),
-                          child:
-                              const Icon(Icons.edit, color: Colors.white),
-                        ),
-                        secondaryBackground: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 20),
-                          child: const Icon(Icons.delete,
-                              color: Colors.white),
-                        ),
-                        child: BookListCard(
-                          bookName: book['bookName'] ?? 'Unknown',
-                          genre: book['genre'] ?? 'Unknown',
-                          author: book['author'] ?? 'Unknown',
-                          pages: book['pages'] ?? 0,
-                          image: book['image'] ?? '',
-                          rate: book['rate'] ?? 4,
-                          readingYear: book['readingYear'] ?? 0,
-                          language: book['language'] ?? 'Unknown',
-                        ),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 5,
+                        backgroundColor: MyColors.buttonColor,
+                        foregroundColor: Colors.grey[900],
                       ),
-                    );
-                  },
-                );
-              },
+                      child: const Text('Kitap Ekle'),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const Divider(),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('books')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Center(
+                        child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text("Kitap yok"));
+                  }
+
+                  books = snapshot.data!.docs;
+
+                  // Filtreleme işlemi
+                  List<DocumentSnapshot> filteredBooks =
+                      books.where((bookDoc) {
+                    Map<String, dynamic> book =
+                        bookDoc.data() as Map<String, dynamic>;
+                    String bookName = book['bookName'].toLowerCase();
+                    String author = book['author'].toLowerCase();
+                    return bookName.contains(searchQuery) ||
+                        author.contains(searchQuery);
+                  }).toList();
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: filteredBooks.length,
+                    itemBuilder: (context, index) {
+                      final bookDoc = filteredBooks[index];
+                      final book = bookDoc.data() as Map<String, dynamic>;
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BookDetailPage(
+                                books: filteredBooks,
+                                initialIndex: index,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Dismissible(
+                          key: UniqueKey(),
+                          direction: DismissDirection.horizontal,
+                          confirmDismiss: (direction) async {
+                            if (direction == DismissDirection.endToStart) {
+                              return await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Kitabı Sil"),
+                                    content: Text(
+                                        "${book['bookName']} kitabını silmek istediğinize emin misiniz?"),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        child: const Text("İptal"),
+                                        onPressed: () {
+                                          Navigator.of(context).pop(
+                                              false); // Silmeyi iptal et
+                                        },
+                                      ),
+                                      TextButton(
+                                        child: const Text("Sil"),
+                                        onPressed: () {
+                                          _deleteBook(bookDoc.id,
+                                              book['bookName'], index);
+                                          Navigator.of(context)
+                                              .pop(true); // Silmeyi onayla
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            } else if (direction ==
+                                DismissDirection.startToEnd) {
+                              _updateBook(bookDoc.id, book, index);
+                              return false; // Silme işlemi yapılmasın
+                            }
+                            return false; // Herhangi başka bir durumda silme işlemi yapılmasın
+                          },
+                          background: Container(
+                            color: Colors.green,
+                            alignment: Alignment.centerLeft,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            child: const Icon(Icons.edit,
+                                color: Colors.white),
+                          ),
+                          secondaryBackground: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            child: const Icon(Icons.delete,
+                                color: Colors.white),
+                          ),
+                          child: BookListCard(
+                            bookName: book['bookName'] ?? 'Unknown',
+                            genre: book['genre'] ?? 'Unknown',
+                            author: book['author'] ?? 'Unknown',
+                            pages: book['pages'] ?? 0,
+                            image: book['image'] ?? '',
+                            rate: book['rate'] ?? 4,
+                            readingYear: book['readingYear'] ?? 0,
+                            language: book['language'] ?? 'Unknown',
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
