@@ -21,9 +21,9 @@ class AddBookPage extends StatefulWidget {
 }
 
 class _AddBookPageState extends State<AddBookPage> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController bookNameController = TextEditingController();
   final TextEditingController authorController = TextEditingController();
-  final TextEditingController genreController = TextEditingController();
   final TextEditingController pagesController = TextEditingController();
   final TextEditingController summaryController = TextEditingController();
   final TextEditingController readingYearController =
@@ -44,36 +44,45 @@ class _AddBookPageState extends State<AddBookPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTextField(
-                bookNameController, 'Kitap Adı', 'Kitabın adını girin'),
-            const SizedBox(height: 20),
-            _buildTextField(
-                authorController, 'Yazar', 'Kitabın yazarını girin'),
-            const SizedBox(height: 20),
-            _buildDropdown(), // Türler için dropdown menü
-            const SizedBox(height: 20),
-            _buildTextField(pagesController, 'Sayfa Sayısı',
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTextField(
+                  bookNameController, 'Kitap Adı', 'Kitabın adını girin'),
+              const SizedBox(height: 20),
+              _buildTextField(
+                  authorController, 'Yazar', 'Kitabın yazarını girin'),
+              const SizedBox(height: 20),
+              _buildDropdown(),
+              const SizedBox(height: 20),
+              _buildTextField(
+                pagesController,
+                'Sayfa Sayısı',
                 'Kitabın sayfa sayısını girin',
-                isNumber: true),
-            const SizedBox(height: 20),
-            _buildLanguageDropdown(), // Dil seçimi için dropdown menü
-            const SizedBox(height: 20),
-            _buildTextField(readingYearController, 'Okuduğum Yıl',
+                isNumber: true,
+              ),
+              const SizedBox(height: 20),
+              _buildLanguageDropdown(),
+              const SizedBox(height: 20),
+              _buildTextField(
+                readingYearController,
+                'Okuduğum Yıl',
                 'Kitabı okuduğunuz yılı girin',
-                isNumber: true),
-            const SizedBox(height: 20),
-            _buildTextField(
-                summaryController, 'Özet', 'Kitap özetini girin'),
-            const SizedBox(height: 30),
-            _buildRatingBar(),
-            const SizedBox(height: 15),
-            _buildImagePicker(),
-            const SizedBox(height: 20),
-            _buildActionButtons(),
-          ],
+                isNumber: true,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                  summaryController, 'Özet', 'Kitap özetini girin'),
+              const SizedBox(height: 30),
+              _buildRatingBar(),
+              const SizedBox(height: 15),
+              _buildImagePicker(),
+              const SizedBox(height: 20),
+              _buildActionButtons(),
+            ],
+          ),
         ),
       ),
     );
@@ -86,6 +95,18 @@ class _AddBookPageState extends State<AddBookPage> {
       controller: controller,
       decoration: InputDecoration(labelText: label, hintText: hint),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      inputFormatters: isNumber
+          ? [FilteringTextInputFormatter.digitsOnly] // Sadece rakamlar
+          : null,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return '$label boş bırakılamaz';
+        }
+        if (isNumber && int.tryParse(value) == null) {
+          return 'Geçerli bir sayı girin';
+        }
+        return null;
+      },
     );
   }
 
@@ -108,6 +129,12 @@ class _AddBookPageState extends State<AddBookPage> {
         );
       }).toList(),
       decoration: const InputDecoration(labelText: 'Tür'),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Tür seçimi yapılmalıdır';
+        }
+        return null;
+      },
     );
   }
 
@@ -130,6 +157,12 @@ class _AddBookPageState extends State<AddBookPage> {
         );
       }).toList(),
       decoration: const InputDecoration(labelText: 'Dil'),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Dil seçimi yapılmalıdır';
+        }
+        return null;
+      },
     );
   }
 
@@ -175,7 +208,11 @@ class _AddBookPageState extends State<AddBookPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         ElevatedButton(
-          onPressed: addBook,
+          onPressed: () {
+            if (_formKey.currentState?.validate() == true) {
+              addBook();
+            }
+          },
           style: ElevatedButton.styleFrom(
             elevation: 5,
             backgroundColor: MyColors.buttonColor,
@@ -207,7 +244,7 @@ class _AddBookPageState extends State<AddBookPage> {
       await firestore.collection('books').doc(idFromTitle).set({
         'bookName': bookNameController.text,
         'author': authorController.text,
-        'genre': selectedGenre, // Güncellenmiş
+        'genre': selectedGenre,
         'pages': int.tryParse(pagesController.text) ?? 0,
         'language': languageDropdownValue,
         'readingYear': int.tryParse(readingYearController.text) ?? 0,
