@@ -29,10 +29,174 @@ class _AddBookPageState extends State<AddBookPage> {
   final TextEditingController readingYearController =
       TextEditingController();
 
-  String languageDropdownValue = 'Türkçe';
+  String selectedGenre = BookVariables().genres[0];
+  String languageDropdownValue = BookVariables().languages[0];
   String isbn = '';
   String imageUrl = '';
   int rate = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Kitap Ekle'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTextField(
+                bookNameController, 'Kitap Adı', 'Kitabın adını girin'),
+            const SizedBox(height: 20),
+            _buildTextField(
+                authorController, 'Yazar', 'Kitabın yazarını girin'),
+            const SizedBox(height: 20),
+            _buildDropdown(), // Türler için dropdown menü
+            const SizedBox(height: 20),
+            _buildTextField(pagesController, 'Sayfa Sayısı',
+                'Kitabın sayfa sayısını girin',
+                isNumber: true),
+            const SizedBox(height: 20),
+            _buildLanguageDropdown(), // Dil seçimi için dropdown menü
+            const SizedBox(height: 20),
+            _buildTextField(readingYearController, 'Okuduğum Yıl',
+                'Kitabı okuduğunuz yılı girin',
+                isNumber: true),
+            const SizedBox(height: 20),
+            _buildTextField(
+                summaryController, 'Özet', 'Kitap özetini girin'),
+            const SizedBox(height: 30),
+            _buildRatingBar(),
+            const SizedBox(height: 15),
+            _buildImagePicker(),
+            const SizedBox(height: 20),
+            _buildActionButtons(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  TextFormField _buildTextField(
+      TextEditingController controller, String label, String hint,
+      {bool isNumber = false}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label, hintText: hint),
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+    );
+  }
+
+  DropdownButtonFormField<String> _buildDropdown() {
+    return DropdownButtonFormField<String>(
+      value: selectedGenre,
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            selectedGenre = newValue;
+          });
+        }
+      },
+      items: BookVariables()
+          .genres
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      decoration: const InputDecoration(labelText: 'Tür'),
+    );
+  }
+
+  DropdownButtonFormField<String> _buildLanguageDropdown() {
+    return DropdownButtonFormField<String>(
+      value: languageDropdownValue,
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            languageDropdownValue = newValue;
+          });
+        }
+      },
+      items: BookVariables()
+          .languages
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      decoration: const InputDecoration(labelText: 'Dil'),
+    );
+  }
+
+  Center _buildRatingBar() {
+    return Center(
+      child: RatingBar.builder(
+        initialRating: 3,
+        minRating: 0,
+        direction: Axis.horizontal,
+        itemCount: 5,
+        itemSize: 30,
+        itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
+        itemBuilder: (context, _) =>
+            const Icon(Icons.star, color: Colors.amber),
+        onRatingUpdate: (rating) {
+          setState(() {
+            rate = rating.toInt();
+          });
+        },
+      ),
+    );
+  }
+
+  GestureDetector _buildImagePicker() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: _pickImage,
+            icon: const Icon(Icons.image),
+            iconSize: 30,
+          ),
+          const Text("Kitap Kapak Resmi Ekle",
+              style: TextStyle(fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Row _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        ElevatedButton(
+          onPressed: addBook,
+          style: ElevatedButton.styleFrom(
+            elevation: 5,
+            backgroundColor: MyColors.buttonColor,
+            foregroundColor: Colors.grey[900],
+          ),
+          child: const Text('Kaydet',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        ),
+        ElevatedButton(
+          onPressed: scanBarcode,
+          style: ElevatedButton.styleFrom(
+            elevation: 5,
+            backgroundColor: MyColors.buttonColor,
+            foregroundColor: Colors.grey[900],
+          ),
+          child: const Text("ISBN Okut",
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        ),
+      ],
+    );
+  }
 
   Future<void> addBook() async {
     try {
@@ -43,13 +207,13 @@ class _AddBookPageState extends State<AddBookPage> {
       await firestore.collection('books').doc(idFromTitle).set({
         'bookName': bookNameController.text,
         'author': authorController.text,
-        'genre': genreController.text,
+        'genre': selectedGenre, // Güncellenmiş
         'pages': int.tryParse(pagesController.text) ?? 0,
         'language': languageDropdownValue,
         'readingYear': int.tryParse(readingYearController.text) ?? 0,
         'rate': rate,
         'image': imageUrl,
-        'summary': summaryController.text, // Yeni
+        'summary': summaryController.text,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -131,146 +295,5 @@ class _AddBookPageState extends State<AddBookPage> {
             duration: const Duration(seconds: 1)),
       );
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kitap Ekle'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTextField(
-                bookNameController, 'Kitap Adı', 'Kitabın adını girin'),
-            const SizedBox(height: 20),
-            _buildTextField(
-                authorController, 'Yazar', 'Kitabın yazarını girin'),
-            const SizedBox(height: 20),
-            _buildTextField(
-                genreController, 'Tür', 'Kitabın türünü girin'),
-            const SizedBox(height: 20),
-            _buildTextField(pagesController, 'Sayfa Sayısı',
-                'Kitabın sayfa sayısını girin',
-                isNumber: true),
-            const SizedBox(height: 20),
-            _buildDropdown(),
-            const SizedBox(height: 20),
-            _buildTextField(readingYearController, 'Okuduğum Yıl',
-                'Kitabı okuduğunuz yılı girin',
-                isNumber: true),
-            const SizedBox(height: 20),
-            _buildTextField(
-                summaryController, 'Özet', 'Kitap özetini girin'), // Yeni
-            const SizedBox(height: 30),
-            _buildRatingBar(),
-            const SizedBox(height: 15),
-            _buildImagePicker(),
-            const SizedBox(height: 20),
-            _buildActionButtons(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  TextFormField _buildTextField(
-      TextEditingController controller, String label, String hint,
-      {bool isNumber = false}) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(labelText: label, hintText: hint),
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-    );
-  }
-
-  DropdownButtonFormField<String> _buildDropdown() {
-    return DropdownButtonFormField<String>(
-      value: languageDropdownValue,
-      onChanged: (String? newValue) {
-        if (newValue != null) {
-          setState(() {
-            languageDropdownValue = newValue;
-          });
-        }
-      },
-      items: <String>['Türkçe', 'İngilizce']
-          .map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-      decoration: const InputDecoration(labelText: 'Dil'),
-    );
-  }
-
-  Center _buildRatingBar() {
-    return Center(
-      child: RatingBar.builder(
-        initialRating: 3,
-        minRating: 0,
-        direction: Axis.horizontal,
-        itemCount: 5,
-        itemSize: 30,
-        itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-        itemBuilder: (context, _) =>
-            const Icon(Icons.star, color: Colors.amber),
-        onRatingUpdate: (rating) {
-          setState(() {
-            rate = rating.toInt();
-          });
-        },
-      ),
-    );
-  }
-
-  GestureDetector _buildImagePicker() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: _pickImage,
-            icon: const Icon(Icons.image),
-            iconSize: 30,
-          ),
-          const Text("Kitap Kapak Resmi Ekle",
-              style: TextStyle(fontSize: 14)),
-        ],
-      ),
-    );
-  }
-
-  Row _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        ElevatedButton(
-          onPressed: addBook,
-          style: ElevatedButton.styleFrom(
-            elevation: 5,
-            backgroundColor: MyColors.buttonColor,
-            foregroundColor: Colors.grey[900],
-          ),
-          child: const Text('Kaydet',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-        ),
-        ElevatedButton(
-          onPressed: scanBarcode,
-          style: ElevatedButton.styleFrom(
-            elevation: 5,
-            backgroundColor: MyColors.buttonColor,
-            foregroundColor: Colors.grey[900],
-          ),
-          child: const Text("ISBN Okut",
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-        ),
-      ],
-    );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_cloud_firestore/firebase_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
@@ -17,6 +17,14 @@ class _BookListPageState extends State<BookListPage> {
   List<DocumentSnapshot> books = [];
   TextEditingController searchController = TextEditingController();
   String searchQuery = '';
+
+  // Filtreleme için kullanılacak değişkenler
+  String? filterGenre;
+  int? filterReadingYear;
+
+  final genres = BookVariables().genres;
+
+  final years = BookVariables().years;
 
   void _deleteBook(String bookId, String bookName, int index) {
     FirebaseFirestore.instance
@@ -40,6 +48,77 @@ class _BookListPageState extends State<BookListPage> {
 
   void _updateBook(String bookId, Map<String, dynamic> book, int index) {
     _showUpdateDialog(bookId, book, index);
+  }
+
+  void _showFilterDialog() {
+    String? selectedGenre;
+    int? selectedYear;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Filtreleme Seçenekleri'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'Tür'),
+                  value: selectedGenre,
+                  items: genres.map((String genre) {
+                    return DropdownMenuItem<String>(
+                      value: genre,
+                      child: Text(genre),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      selectedGenre = newValue;
+                    });
+                  },
+                ),
+                DropdownButtonFormField<int>(
+                  decoration:
+                      const InputDecoration(labelText: 'Okuma Yılı'),
+                  value: selectedYear,
+                  items: years.map((int year) {
+                    return DropdownMenuItem<int>(
+                      value: year,
+                      child: Text(year.toString()),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      selectedYear = newValue;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  searchQuery = '';
+                  filterGenre = selectedGenre?.toLowerCase();
+                  filterReadingYear = selectedYear;
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('Filtrele'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showUpdateDialog(
@@ -73,7 +152,19 @@ class _BookListPageState extends State<BookListPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildTextField(bookNameController, 'Kitap Adı'),
-                  _buildTextField(genreController, 'Tür'),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(labelText: 'Tür'),
+                    value: genreController.text,
+                    items: genres.map((String genre) {
+                      return DropdownMenuItem<String>(
+                        value: genre,
+                        child: Text(genre),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      genreController.text = newValue!;
+                    },
+                  ),
                   _buildTextField(authorController, 'Yazar'),
                   _buildNumberField(pagesController, 'Sayfa Sayısı'),
                   _buildRatingBar(rate, (newRate) {
@@ -81,7 +172,20 @@ class _BookListPageState extends State<BookListPage> {
                       rate = newRate;
                     });
                   }),
-                  _buildNumberField(readingYearController, 'Okuma Yılı'),
+                  DropdownButtonFormField<int>(
+                    decoration:
+                        const InputDecoration(labelText: 'Okuma Yılı'),
+                    value: int.tryParse(readingYearController.text),
+                    items: years.map((int year) {
+                      return DropdownMenuItem<int>(
+                        value: year,
+                        child: Text(year.toString()),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      readingYearController.text = newValue.toString();
+                    },
+                  ),
                   _buildTextField(languageController, 'Dil'),
                   _buildTextField(summaryController, 'Özet'),
                 ],
@@ -176,6 +280,15 @@ class _BookListPageState extends State<BookListPage> {
     );
   }
 
+  void _resetFilters() {
+    setState(() {
+      searchQuery = '';
+      filterGenre = null;
+      filterReadingYear = null;
+      searchController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,16 +297,35 @@ class _BookListPageState extends State<BookListPage> {
           children: [
             Padding(
               padding: const EdgeInsets.all(12.0),
-              child: SearchBar(
-                elevation: const WidgetStatePropertyAll(5),
-                hintText: "Kitap ara",
-                leading: const Icon(Icons.search),
-                controller: searchController,
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value.toLowerCase();
-                  });
-                },
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SearchBar(
+                      elevation: const WidgetStatePropertyAll(5),
+                      hintText: "Kitap ara",
+                      leading: const Icon(Icons.search),
+                      controller: searchController,
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value.toLowerCase();
+                          filterGenre =
+                              null; // Arama yapılırken tür filtresini sıfırla
+                          filterReadingYear =
+                              null; // Arama yapılırken yıl filtresini sıfırla
+                        });
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: _showFilterDialog,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed:
+                        _resetFilters, // Filtreleri sıfırlamak için düğme
+                  ),
+                ],
               ),
             ),
             Padding(
@@ -241,8 +373,22 @@ class _BookListPageState extends State<BookListPage> {
                         bookDoc.data() as Map<String, dynamic>;
                     String bookName = book['bookName'].toLowerCase();
                     String author = book['author'].toLowerCase();
-                    return bookName.contains(searchQuery) ||
-                        author.contains(searchQuery);
+                    String genre = book['genre'].toLowerCase();
+                    int readingYear = book['readingYear'] ?? 0;
+
+                    bool matchesSearchQuery =
+                        bookName.contains(searchQuery) ||
+                            author.contains(searchQuery);
+                    bool matchesGenreFilter = filterGenre == null ||
+                        filterGenre!.isEmpty ||
+                        genre.contains(filterGenre!);
+                    bool matchesReadingYearFilter =
+                        filterReadingYear == null ||
+                            filterReadingYear == readingYear;
+
+                    return matchesSearchQuery &&
+                        matchesGenreFilter &&
+                        matchesReadingYearFilter;
                   }).toList();
 
                   return ListView.builder(
@@ -280,8 +426,7 @@ class _BookListPageState extends State<BookListPage> {
                                       TextButton(
                                         child: const Text("İptal"),
                                         onPressed: () {
-                                          Navigator.of(context).pop(
-                                              false); // Silmeyi iptal et
+                                          Navigator.of(context).pop(false);
                                         },
                                       ),
                                       TextButton(
@@ -289,8 +434,7 @@ class _BookListPageState extends State<BookListPage> {
                                         onPressed: () {
                                           _deleteBook(bookDoc.id,
                                               book['bookName'], index);
-                                          Navigator.of(context)
-                                              .pop(true); // Silmeyi onayla
+                                          Navigator.of(context).pop(true);
                                         },
                                       ),
                                     ],
@@ -302,7 +446,7 @@ class _BookListPageState extends State<BookListPage> {
                               _updateBook(bookDoc.id, book, index);
                               return false; // Silme işlemi yapılmasın
                             }
-                            return false; // Herhangi başka bir durumda silme işlemi yapılmasın
+                            return false;
                           },
                           background: Container(
                             color: Colors.green,
