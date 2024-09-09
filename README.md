@@ -1,16 +1,24 @@
 # book_list
 
-A new Flutter project.
+### Okunan kitapların listelenebileceği ve özet kısmının eklenebileceği bir mobil uygulama
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+![Uygulama Görseli](project_images/app_preview_v1.png)
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Uygulama Özellikleri
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Kitap Verisi Ekleme - Silme - Güncelleme
+
+2. ISBN Kodu okutarak kitap bilgilerini doldurma
+
+3. Arama ve Filtrleme özelliği
+
+4. Alışkanlık kontrolü için rutin takip kısmı (Eklenecek Özellik)
+
+5. Kitaplar için farklı listeler oluşturma ve bu listeleri yönetme. (Eklenecek Özellik)
+
+6. Okunan kitaplara göre grafikli analiz kısmı (Kaç gün kitap okumuşsun, en çok hangi türde kitap okumuşsun vb.) (Eklenecek Özellik)
+
+
+

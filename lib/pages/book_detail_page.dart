@@ -33,7 +33,10 @@ class BookDetailPage extends StatelessWidget {
 
   Widget _buildBookDetail(String bookId) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('books').doc(bookId).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('books')
+          .doc(bookId)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -124,7 +127,8 @@ class BookDetailPage extends StatelessWidget {
           itemCount: 5,
           itemSize: 30,
           itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-          itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
+          itemBuilder: (context, _) =>
+              const Icon(Icons.star, color: Colors.amber),
           onRatingUpdate: (rating) {
             print(rating);
           },
@@ -139,143 +143,138 @@ class BookDetailPage extends StatelessWidget {
   // ... _showSummaryDialog ve _updateBookSummary metotları da aynı kalabilir.
 }
 
-  Widget _buildDetailText(String? text, double fontSize,
-      FontWeight fontWeight, int durationMs) {
-    return Center(
-      child: FadeInUp(
-        duration: Duration(milliseconds: durationMs),
-        child: Text(
-          text ?? 'Bilgi bulunmuyor.',
-          style: TextStyle(fontSize: fontSize, fontWeight: fontWeight),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHighlightedText(String text, int durationMs) {
-    return FadeInUp(
+Widget _buildDetailText(
+    String? text, double fontSize, FontWeight fontWeight, int durationMs) {
+  return Center(
+    child: FadeInUp(
       duration: Duration(milliseconds: durationMs),
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-        decoration: BoxDecoration(
-          color: MyColors.buttonColor.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(4.0),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(fontSize: 18),
-        ),
+      child: Text(
+        text ?? 'Bilgi bulunmuyor.',
+        style: TextStyle(fontSize: fontSize, fontWeight: fontWeight),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildSummarySection(
-      BuildContext context, String? summary, String bookId) {
-    return FadeInUp(
-      duration: const Duration(milliseconds: 1200),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.grey[800],
-          borderRadius: BorderRadius.circular(8.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Kitap Özeti',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            summary == null || summary.isEmpty
-                ? GestureDetector(
-                    onTap: () => _showSummaryDialog(context, bookId),
-                    child: const Text(
-                      'Özet bulunmuyor. Özet eklemek için tıklayın.',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                  )
-                : Text(
-                    summary,
-                    style:
-                        const TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-          ],
-        ),
+Widget _buildHighlightedText(String text, int durationMs) {
+  return FadeInUp(
+    duration: Duration(milliseconds: durationMs),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: MyColors.buttonColor.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(4.0),
       ),
-    );
-  }
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 18),
+      ),
+    ),
+  );
+}
 
-  void _showSummaryDialog(BuildContext context, String bookId) {
-    final TextEditingController summaryController =
-        TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Özet Ekle'),
-          content: TextField(
-            controller: summaryController,
-            decoration: const InputDecoration(
-              hintText: 'Özetinizi buraya girin',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 5,
-            keyboardType: TextInputType.multiline,
+Widget _buildSummarySection(
+    BuildContext context, String? summary, String bookId) {
+  return FadeInUp(
+    duration: const Duration(milliseconds: 1200),
+    child: Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('İptal'),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Kitap Özeti',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
-            TextButton(
-              onPressed: () async {
-                final summary = summaryController.text.trim();
-                if (summary.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Özet boş olamaz!'),
-                      backgroundColor: Color.fromARGB(255, 238, 33, 18),
-                    ),
-                  );
-                  return;
-                }
+          ),
+          const SizedBox(height: 8),
+          summary == null || summary.isEmpty
+              ? GestureDetector(
+                  onTap: () => _showSummaryDialog(context, bookId),
+                  child: const Text(
+                    'Özet bulunmuyor. Özet eklemek için tıklayın.',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                )
+              : Text(
+                  summary,
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                ),
+        ],
+      ),
+    ),
+  );
+}
 
-                await _updateBookSummary(bookId, summary);
-                Navigator.of(context).pop();
-              },
-              child: const Text('Kaydet'),
-            ),
-          ],
-        );
-      },
-    );
+void _showSummaryDialog(BuildContext context, String bookId) {
+  final TextEditingController summaryController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Özet Ekle'),
+        content: TextField(
+          controller: summaryController,
+          decoration: const InputDecoration(
+            hintText: 'Özetinizi buraya girin',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 5,
+          keyboardType: TextInputType.multiline,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final summary = summaryController.text.trim();
+              if (summary.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Özet boş olamaz!'),
+                    backgroundColor: Color.fromARGB(255, 238, 33, 18),
+                  ),
+                );
+                return;
+              }
+
+              await _updateBookSummary(bookId, summary);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Kaydet'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Future<void> _updateBookSummary(String bookId, String summary) async {
+  final bookRef = FirebaseFirestore.instance.collection('books').doc(bookId);
+
+  try {
+    await bookRef.update({'summary': summary});
+    print('Özet güncellendi.');
+  } catch (e) {
+    print('Özet güncellenirken bir hata oluştu: $e');
   }
-
-  Future<void> _updateBookSummary(String bookId, String summary) async {
-    final bookRef =
-        FirebaseFirestore.instance.collection('books').doc(bookId);
-
-    try {
-      await bookRef.update({'summary': summary});
-      print('Özet güncellendi.');
-    } catch (e) {
-      print('Özet güncellenirken bir hata oluştu: $e');
-    }
-  }
-
+}
